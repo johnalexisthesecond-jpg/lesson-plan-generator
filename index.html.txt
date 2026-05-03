@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<h1>Lesson Plan Generator V2</h1>
+
+<p style="
+text-align:center;
+margin-bottom:20px;
+color:#475569;
+font-size:14px;
+font-style:italic;
+">
+Made by John Alexis
+</p>
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#eef2f7;
+    color:#222;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+    color:#1e293b;
+}
+
+.container{
+    display:grid;
+    grid-template-columns:400px 1fr;
+    gap:20px;
+}
+
+.panel{
+    background:white;
+    border-radius:14px;
+    padding:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.form-panel{
+    height:95vh;
+    overflow:auto;
+    position:sticky;
+    top:10px;
+}
+
+.output-panel{
+    max-height:95vh;
+    overflow:auto;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+input,
+textarea{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+.generate{
+    background:#2563eb;
+    color:white;
+}
+
+.reset{
+    background:#64748b;
+    color:white;
+    margin-left:10px;
+}
+
+.print{
+    background:#16a34a;
+    color:white;
+    margin-bottom:20px;
+}
+
+.loading{
+    display:none;
+    margin-top:15px;
+    color:#2563eb;
+    font-weight:bold;
+}
+
+.lesson-section{
+    margin-bottom:40px;
+}
+
+h2{
+    background:#1e293b;
+    color:white;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+h3{
+    color:#0f172a;
+    margin-top:20px;
+    margin-bottom:10px;
+}
+
+p{
+    line-height:1.7;
+    margin-bottom:10px;
+}
+
+ul,ol{
+    margin-left:25px;
+    margin-bottom:15px;
+    line-height:1.7;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    margin-bottom:20px;
+}
+
+table th,
+table td{
+    border:1px solid #333;
+    padding:10px;
+    vertical-align:top;
+}
+
+.badge{
+    display:inline-block;
+    background:#dbeafe;
+    color:#1d4ed8;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    margin-bottom:10px;
+}
+
+@media print{
+
+    body{
+        background:white;
+    }
+
+    .form-panel{
+        display:none;
+    }
+
+    .container{
+        display:block;
+    }
+
+    .output-panel{
+        max-height:none;
+    }
+
+    .print{
+        display:none;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="panel form-panel">
+
+<label>Grade Level</label>
+<input type="text" id="grade">
+
+<label>Quarter</label>
+<input type="text" id="quarter">
+
+<label>Subject</label>
+<input type="text" id="subject">
+
+<label>Content Standard</label>
+<textarea id="contentStandard"></textarea>
+
+<label>Performance Standard</label>
+<textarea id="performanceStandard"></textarea>
+
+<label>Acquisition (One per line)</label>
+<textarea id="acquisition"></textarea>
+
+<label>Make Meaning (One per line)</label>
+<textarea id="makeMeaning"></textarea>
+
+<label>Transfer</label>
+<textarea id="transfer"></textarea>
+
+<button class="generate" onclick="generateLesson()">Generate Lesson Plan</button>
+<button class="reset" onclick="resetForm()">Reset</button>
+
+<div class="loading" id="loading">
+Generating professional lesson plan...
+</div>
+
+</div>
+
+<div class="panel output-panel">
+
+<button class="print" onclick="window.print()">
+Download / Print
+</button>
+
+<div id="output">
+
+<p>Your generated lesson plan will appear here.</p>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function getLines(value){
+    return value
+        .split("\n")
+        .map(v => v.trim())
+        .filter(v => v !== "");
+}
+
+function validate(data){
+
+    for(let item of data){
+
+        if(item.trim() === ""){
+            return false;
+        }
+
+    }
+
+    return true;
+}
+
+function generateObjectives(subject){
+
+    let objectives = "";
+
+    const items = [
+        `Define major concepts related to ${subject}.`,
+        `Explain important principles in ${subject}.`,
+        `Analyze situations connected to ${subject}.`,
+        `Apply concepts in real-world contexts.`,
+        `Develop evidence-based conclusions.`,
+        `Collaborate during learning activities.`,
+        `Use critical thinking in solving problems.`,
+        `Communicate ideas effectively.`,
+        `Reflect on learning experiences.`,
+        `Demonstrate mastery through performance tasks.`
+    ];
+
+    items.forEach(i => {
+        objectives += `<li>${i}</li>`;
+    });
+
+    return `<ol>${objectives}</ol>`;
+}
+
+function createChecklist(count, text){
+
+    let html = "<ul>";
+
+    for(let i=1; i<=count; i++){
+
+        html += `<li>${text} ${i}</li>`;
+
+    }
+
+    html += "</ul>";
+
+    return html;
+}
+
+function generateLesson(){
+
+    const grade = document.getElementById("grade").value;
+    const quarter = document.getElementById("quarter").value;
+    const subject = document.getElementById("subject").value;
+    const contentStandard = document.getElementById("contentStandard").value;
+    const performanceStandard = document.getElementById("performanceStandard").value;
+    const acquisition = document.getElementById("acquisition").value;
+    const makeMeaning = document.getElementById("makeMeaning").value;
+    const transfer = document.getElementById("transfer").value;
+
+    if(!validate([
+        grade,
+        quarter,
+        subject,
+        contentStandard,
+        performanceStandard,
+        acquisition,
+        makeMeaning,
+        transfer
+    ])){
+
+        alert("Please complete all fields.");
+        return;
+
+    }
+
+    document.getElementById("loading").style.display = "block";
+
+    setTimeout(() => {
+
+        const acquisitions = getLines(acquisition);
+        const meanings = getLines(makeMeaning);
+
+        let html = "";
+
+        /* =========================
+           EXPLORE
+        ========================== */
+
+        html += `
+        <div class="lesson-section">
+
+        <h2>EXPLORE</h2>
+
+        <div class="badge">
+        ${grade} | Quarter ${quarter} | ${subject}
+        </div>
+
+        <h3>Topic:</h3>
+        <p>${subject} Core Concepts and Applications</p>
+
+        <h3>Content Standard:</h3>
+        <p>${contentStandard}</p>
+
+        <h3>Performance Standard:</h3>
+        <p>${performanceStandard}</p>
+
+        <h3>Overview/Introduction:</h3>
+
+        <p>
+        This unit in ${subject} for ${grade} learners focuses on helping students build deep understanding of core concepts, meaningful application of learning, and development of higher-order thinking skills. Through inquiry-based learning experiences, collaborative engagement, and reflective analysis, learners will develop the ability to connect concepts with authentic real-world situations and meaningful problem-solving experiences.
+        </p>
+
+        <p>
+        Throughout this quarter, students will actively participate in discussions, investigations, performance-based tasks, and evidence-based reasoning activities designed to strengthen understanding and independent learning. The unit also encourages learners to communicate ideas clearly, justify claims using evidence, and transfer understanding into practical and socially relevant contexts.
+        </p>
+
+        <h3>Objectives:</h3>
+
+        ${generateObjectives(subject)}
+
+        <h3>Essential Question:</h3>
+
+        <p>
+        How can understanding concepts in ${subject} help learners solve real-world problems and make responsible decisions?
+        </p>
+
+        <h3>Hook Activity:</h3>
+
+        <p>
+        Students are presented with a realistic scenario connected to ${subject}. In groups, they analyze the situation, identify possible issues, and discuss how prior knowledge may help solve the problem. Students then share predictions and possible solutions before formal instruction begins.
+        </p>
+
+        <h3>Guide Question:</h3>
+
+        <p>
+        What important understandings must learners develop in order to respond effectively to authentic challenges related to this unit?
+        </p>
+
+        <h3>Map of Conceptual Change:</h3>
+
+        <table>
+
+        <tr>
+            <th>Before Learning</th>
+            <th>After Learning</th>
+        </tr>
+
+        <tr>
+            <td>
+            Learners may have misconceptions, incomplete understanding, or surface-level ideas regarding important concepts in ${subject}.
+            </td>
+
+            <td>
+            Learners demonstrate accurate understanding, evidence-based reasoning, and the ability to apply concepts meaningfully in authentic situations.
+            </td>
+        </tr>
+
+        </table>
+
+        </div>
+        `;
+
+        /* =========================
+           FIRM UP
+        ========================== */
+
+        html += `
+        <div class="lesson-section">
+
+        <h2>FIRM-UP</h2>
+        `;
+
+        acquisitions.forEach((acq, index) => {
+
+            html += `
+
+            <h3>
+            LC ${index + 1} (ACQUISITION) — ${acq}
+            </h3>
+
+            <h3>Learning Target</h3>
+
+            <ul>
+                <li>Understand important concepts related to ${acq}.</li>
+                <li>Explain concepts accurately using academic language.</li>
+                <li>Apply concepts in guided learning situations.</li>
+            </ul>
+
+            <h3>Success Criteria</h3>
+
+            <ul>
+                <li>Students explain concepts correctly.</li>
+                <li>Students complete learning tasks accurately.</li>
+                <li>Students participate actively during discussions.</li>
+            </ul>
+
+            <h3>Look For</h3>
+
+            <ul>
+                <li>Active student participation</li>
+                <li>Evidence-based responses</li>
+                <li>Correct application of concepts</li>
+            </ul>
+
+            <h3>Activity Title</h3>
+
+            <p>
+            Exploring ${acq} Through Inquiry-Based Learning
+            </p>
+
+            <h3>Introduction</h3>
+
+            <p>
+            This learning competency focuses on helping learners build foundational understanding of ${acq}. Students will explore concepts through guided activities, collaborative discussions, and authentic examples.
+            </p>
+
+            <h3>Instructions</h3>
+
+            <ol>
+
+                <li>Review prior knowledge related to the topic.</li>
+
+                <li>Analyze examples presented by the teacher.</li>
+
+                <li>Participate in collaborative learning tasks.</li>
+
+                <li>Discuss findings and observations with peers.</li>
+
+                <li>Complete guided practice activities.</li>
+
+                <li>Reflect on learning gained from the activity.</li>
+
+            </ol>
+
+            <h3>Links/Materials Used</h3>
+
+            <ul>
+                <li>Learning activity sheets</li>
+                <li>Teacher-prepared presentation</li>
+                <li>Reference materials related to ${subject}</li>
+                <li>Interactive discussion materials</li>
+            </ul>
+
+            <h3>Sample Assessment</h3>
+
+            <ol>
+
+                <li>
+                Explain the importance of ${acq} in ${subject}.
+                </li>
+
+                <li>
+                How can understanding ${acq} help solve real-life problems?
+                </li>
+
+                <li>
+                Give one real-life example that demonstrates understanding of ${acq}.
+                </li>
+
+            </ol>
+
+            <h3>In Response to Disruption</h3>
+
+            <p>
+            Learners may complete asynchronous activities using printed modules, recorded lessons, online discussion forums, or independent reflection tasks.
+            </p>
+
+            `;
+
+        });
+
+        html += `</div>`;
+
+        /* =========================
+           DEEPEN
+        ========================== */
+
+        html += `
+        <div class="lesson-section">
+
+        <h2>DEEPEN</h2>
+        `;
+
+        meanings.forEach((meaning, index) => {
+
+            html += `
+
+            <h3>
+            LC ${index + 1} (M) — ${meaning}
+            </h3>
+
+            <h3>Learning Target</h3>
+
+            <ul>
+                <li>Analyze ideas critically.</li>
+                <li>Develop evidence-based claims.</li>
+                <li>Apply reasoning in authentic contexts.</li>
+            </ul>
+
+            <h3>Success Criteria</h3>
+
+            <ul>
+                <li>Students justify claims using evidence.</li>
+                <li>Students explain reasoning logically.</li>
+                <li>Students connect ideas to real-life situations.</li>
+            </ul>
+
+            <h3>Look For</h3>
+
+            <ul>
+                <li>Logical explanations</li>
+                <li>Use of supporting evidence</li>
+                <li>Clear reasoning process</li>
+            </ul>
+
+            <h3>Overview of this LC</h3>
+
+            <p>
+            This learning competency strengthens learners' ability to interpret information critically and construct evidence-based reasoning related to ${meaning}.
+            </p>
+
+            <h3>Activity 1 Title</h3>
+
+            <p>
+            CER Choice Analysis Activity
+            </p>
+
+            <h3>Problem</h3>
+
+            <p>
+            Students analyze a realistic scenario connected to ${meaning} and determine the most accurate claim supported by evidence and reasoning.
+            </p>
+
+            <h3>CER CHOICES</h3>
+
+            <h4>Claim</h4>
+
+            <ul>
+                <li>A. Misinterpreted conclusion</li>
+                <li>B. Weak conclusion</li>
+                <li>C. Accurate evidence-based conclusion</li>
+                <li>D. Unsupported conclusion</li>
+            </ul>
+
+            <h4>Evidence</h4>
+
+            <ul>
+                <li>A. Irrelevant evidence</li>
+                <li>B. Weak supporting evidence</li>
+                <li>C. Strong supporting evidence</li>
+                <li>D. Unsupported statement</li>
+            </ul>
+
+            <h4>Reasoning</h4>
+
+            <ul>
+                <li>A. Illogical explanation</li>
+                <li>B. Incomplete explanation</li>
+                <li>C. Logical evidence-based reasoning</li>
+                <li>D. Unsupported interpretation</li>
+            </ul>
+
+            <h3>CER ANALYSIS</h3>
+
+            <p>
+            Option A is wrong because the conclusion does not match the evidence provided.
+            </p>
+
+            <p>
+            Option B is wrong because the reasoning lacks sufficient explanation and support.
+            </p>
+
+            <p>
+            Option D is wrong because the claim is unsupported and lacks logical connection to the scenario.
+            </p>
+
+            <h3>Correct Answer Recap</h3>
+
+            <p>
+            Claim: Option C is correct because it provides an accurate interpretation supported by strong evidence and logical reasoning.
+            </p>
+
+            <h3>Activity 2 Title</h3>
+
+            <p>
+            CER Think-A-Loud Investigation
+            </p>
+
+            <h3>Problem</h3>
+
+            <p>
+            Students examine another situation related to ${meaning} and verbally explain their thinking process.
+            </p>
+
+            <h3>CER THINK-A-LOUD SCRIPT</h3>
+
+            <p>
+            Step 1: Understand the problem
+            <br>
+            I think the problem is asking me to identify the best explanation for the situation.
+            </p>
+
+            <p>
+            Step 2: Claim
+            <br>
+            I think the strongest claim is supported by accurate information.
+            </p>
+
+            <p>
+            Step 3: Evidence
+            <br>
+            I think the evidence should clearly support the claim.
+            </p>
+
+            <p>
+            Step 4: Reasoning
+            <br>
+            I think the reasoning should explain how the evidence supports the claim.
+            </p>
+
+            <p>
+            Step 5: Conclusion
+            <br>
+            I think the final answer must be logical and evidence-based.
+            </p>
+
+            <h3>ACTIVITY 3 TITLE — GUIDED PRACTICE</h3>
+
+            <h3>Problem</h3>
+
+            <p>
+            Analyze the situation and complete the guided CER response.
+            </p>
+
+            <p>
+            Step 1: Understand the problem
+            <br>
+            I think ____ because ____.
+            </p>
+
+            <p>
+            Step 2: Claim
+            <br>
+            I claim that ____.
+            </p>
+
+            <p>
+            Step 3: Evidence
+            <br>
+            The evidence shows ____.
+            </p>
+
+            <p>
+            Step 4: Reasoning
+            <br>
+            This evidence supports the claim because ____.
+            </p>
+
+            <h3>CER CHECKLIST</h3>
+
+            ${createChecklist(
+                10,
+                "CER Criteria Item"
+            )}
+
+            <h3>ACTIVITY 4 TITLE — INDIVIDUAL PRACTICE</h3>
+
+            <h3>Problem</h3>
+
+            <p>
+            Create an independent CER response based on the given task.
+            </p>
+
+            <h3>Template</h3>
+
+            <p>
+
+            Name/s:
+            <br><br>
+
+            Claim:
+            <br><br>
+
+            Evidence:
+            <br><br>
+
+            Reasoning:
+
+            </p>
+
+            <h3>CER INDIVIDUAL PRACTICE CHECKLIST</h3>
+
+            <ul>
+
+                <li>Clear claim</li>
+
+                <li>Relevant evidence</li>
+
+                <li>Logical reasoning</li>
+
+                <li>Accurate explanation</li>
+
+                <li>Organized response</li>
+
+            </ul>
+
+            <h3>CRITERIA FOR INDIVIDUAL PRACTICE</h3>
+
+            <ul>
+
+                <li>Accuracy of content</li>
+
+                <li>Depth of analysis</li>
+
+                <li>Quality of reasoning</li>
+
+                <li>Clarity of communication</li>
+
+            </ul>
+
+            <h3>IN RESPONSE TO DISRUPTION</h3>
+
+            <p>
+            Students may complete CER tasks asynchronously through online discussion boards, modular tasks, recorded explanations, or independent learning activities.
+            </p>
+
+            `;
+
+            if(index === meanings.length - 1){
+
+                html += `
+
+                <h3>Map of Conceptual Change</h3>
+
+                <table>
+
+                <tr>
+
+                    <th>
+                    Before Learning
+                    </th>
+
+                    <th>
+                    After Learning
+                    </th>
+
+                </tr>
+
+                <tr>
+
+                    <td>
+                    Learners may have incomplete understanding of important concepts.
+                    </td>
+
+                    <td>
+                    Learners demonstrate deeper understanding and meaningful application of concepts.
+                    </td>
+
+                </tr>
+
+                </table>
+
+                <h3>Essential Question</h3>
+
+                <p>
+                How can deeper understanding help learners make meaningful and responsible decisions?
+                </p>
+
+                `;
+
+            }
+
+        });
+
+        html += `</div>`;
+
+        /* =========================
+           TRANSFER
+        ========================== */
+
+        html += `
+
+        <div class="lesson-section">
+
+        <h2>TRANSFER</h2>
+
+        <h3>Performance Standard</h3>
+
+        <p>
+        ${performanceStandard}
+        </p>
+
+        <h3>Transfer Goal</h3>
+
+        <p>
+        ${transfer}
+        </p>
+
+        <h3>GRASPS TABLE FORMAT</h3>
+
+        <table>
+
+        <tr>
+
+            <th>
+            GRASPS Component
+            </th>
+
+            <th>
+            Description
+            </th>
+
+        </tr>
+
+        <tr>
+
+            <td>
+            Goal
+            </td>
+
+            <td>
+            ${transfer}
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>
+            Role
+            </td>
+
+            <td>
+            Critical thinker and responsible learner
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>
+            Audience
+            </td>
+
+            <td>
+            Teachers, classmates, and community members
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>
+            Situation
+            </td>
+
+            <td>
+            Learners address a real-world challenge related to the unit.
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>
+            Product/Performance
+            </td>
+
+            <td>
+            Presentation, report, campaign, or authentic performance task
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>
+            Standards
+            </td>
+
+            <td>
+            ${contentStandard}
+            </td>
+
+        </tr>
+
+        </table>
+
+        <h3>NARRATIVE</h3>
+
+        <p>
+        You are challenged to apply your understanding of ${subject} in solving a meaningful real-world issue. Using evidence, analysis, collaboration, and creative thinking, you will develop an authentic performance output that demonstrates mastery of concepts and responsible decision-making. Your task will require thoughtful planning, critical analysis, and effective communication in order to create meaningful solutions that address the given challenge.
+        </p>
+
+        <h3>GRASPS CHECKLIST</h3>
+
+        ${createChecklist(
+            10,
+            "Performance Task Criteria"
+        )}
+
+        <h3>CRITERIA FOR PERFORMANCE TASK</h3>
+
+        <ul>
+
+            <li>Accuracy of understanding</li>
+
+            <li>Application of concepts</li>
+
+            <li>Quality of reasoning</li>
+
+            <li>Creativity and originality</li>
+
+            <li>Effective communication</li>
+
+        </ul>
+
+        <h3>VALUES INTEGRATION ACTIVITY</h3>
+
+        <p>
+        Students reflect on how concepts learned in ${subject} promote responsibility, respect, integrity, collaboration, and ethical decision-making in everyday life.
+        </p>
+
+        <h3>REFLECTION QUESTIONS</h3>
+
+        <ol>
+
+            <li>
+            What important understanding did you gain from this unit?
+            </li>
+
+            <li>
+            How can you apply these lessons in real-life situations?
+            </li>
+
+            <li>
+            What challenges did you experience during learning?
+            </li>
+
+            <li>
+            How did evidence and reasoning strengthen your understanding?
+            </li>
+
+        </ol>
+
+        <h3>IN RESPONSE TO DISRUPTION</h3>
+
+        <p>
+        Learners may submit digital portfolios, recorded presentations, online outputs, or modular performance tasks in case of learning disruptions.
+        </p>
+
+        </div>
+
+        `;
+
+        document.getElementById("output").innerHTML = html;
+
+        document.getElementById("loading").style.display = "none";
+
+    }, 1500);
+
+}
+
+function resetForm(){
+
+    document.getElementById("grade").value = "";
+    document.getElementById("quarter").value = "";
+    document.getElementById("subject").value = "";
+    document.getElementById("contentStandard").value = "";
+    document.getElementById("performanceStandard").value = "";
+    document.getElementById("acquisition").value = "";
+    document.getElementById("makeMeaning").value = "";
+    document.getElementById("transfer").value = "";
+
+    document.getElementById("output").innerHTML =
+    "<p>Your generated lesson plan will appear here.</p>";
+
+}
+
+</script>
+
+</body>
+</html>
